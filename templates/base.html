@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Video Analysis Tool{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Responsive Layout Container -->
+    <div class="layout-container">
+        <!-- Desktop Left Pane / Mobile Header -->
+        <div class="hero-section">
+            <h1 class="app-title">🎬 Video Analysis Hub</h1>
+            <p class="app-subtitle">Upload, transform, and refine your videos with ease</p>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-section">
+            <div class="content-card">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

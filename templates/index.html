@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Video - Video Analysis Tool{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Process Your Video</h2>
+
+<!-- Alert area for validation messages -->
+<div id="alert-area" class="alert-message" style="display: none;">
+    <span id="alert-text"></span>
+    <button type="button" class="alert-close" onclick="hideAlert()">&times;</button>
+</div>
+
+<form method=post enctype=multipart/form-data class="upload-form" id="upload-form">
+    <div class="file-upload-section">
+        <label for="file-upload" class="file-upload-button">📹 Upload Video</label>
+        <input id="file-upload" type=file name=file accept="video/*" style="display: none;">
+        <div class="drop-text" id="drop-text">or drop a file</div>
+        <div class="file-info" id="file-info" style="display: none;">
+            <div class="file-details">
+                <span class="file-name" id="file-name"></span>
+                <span class="file-size" id="file-size"></span>
+            </div>
+            <button type="button" class="change-video-btn" id="change-video-btn" onclick="changeVideo()">
+                🔄 Change Video
+            </button>
+        </div>
+    </div>
+    
+    <div class="video-options">
+        <h3>Transformations & Effects</h3>
+        <p class="options-description">✨ All options below are optional - customize only what you need!</p>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="transformation">Transformation:</label>
+                <select name="transformation" id="transformation">
+                    <option value="none">None</option>
+                    <option value="grayscale">Grayscale</option>
+                    <option value="invert">Invert Colors</option>
+                    <option value="hflip">Horizontal Flip</option>
+                    <option value="vflip">Vertical Flip</option>
+                    <option value="rotate90">Rotate 90 Clockwise</option>
+                    <option value="rotate180">Rotate 180</option>
+                    <option value="rotate270">Rotate 270 Clockwise</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="filter">Filter:</label>
+                <select name="filter" id="filter">
+                    <option value="none">None</option>
+                    <option value="blur">Blur (Gaussian)</option>
+                    <option value="sharpen">Sharpen</option>
+                    <option value="edge_detect">Edge Detection (Canny)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="speed">Playback Speed:</label>
+                <select name="speed" id="speed">
+                    <option value="1.0" selected>Normal (1x)</option>
+                    <option value="0.25">0.25x</option>
+                    <option value="0.5">0.5x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2.0">2x</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="brightness">Brightness:</label>
+                <input type="text" name="brightness" id="brightness" placeholder="1.0 (0.5-2.0)">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contrast">Contrast:</label>
+                <input type="text" name="contrast" id="contrast" placeholder="1.0 (0.5-2.0)">
+            </div>
+        </div>
+    </div>
+    
+    <button type="submit" class="submit-button">⚡ Process Video</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // File upload handling and validation
+    const fileUpload = document.getElementById('file-upload');
+    const fileUploadButton = document.querySelector('.file-upload-button');
+    const dropText = document.getElementById('drop-text');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const uploadForm = document.getElementById('upload-form');
+    const alertArea = document.getElementById('alert-area');
+    const alertText = document.getElementById('alert-text');
+
+    // Show filename after selection
+    fileUpload.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            const file = this.files[0];
+            const fileSizeFormatted = (file.size / (1024 * 1024)).toFixed(2); // Convert to MB
+            
+            // Validate file type
+            const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+            if (!allowedTypes.includes(file.type)) {
+                showAlert('❌ Please select a valid video file (MP4, AVI, MOV, MKV)', 'error');
+                this.value = ''; // Clear the input
+                hideFileInfo();
+                return;
+            }
+            
+            // Validate file size (100MB limit as set in Flask app)
+            if (file.size > 100 * 1024 * 1024) {
+                showAlert('❌ File size must be less than 100MB. Current size: ' + fileSizeFormatted + 'MB', 'error');
+                this.value = ''; // Clear the input
+                hideFileInfo();
+                return;
+            }
+            
+            // Show file info
+            fileName.textContent = file.name;
+            fileSize.textContent = `${fileSizeFormatted} MB`;
+            dropText.style.display = 'none';
+            fileInfo.style.display = 'block';
+            fileUploadButton.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            fileUploadButton.innerHTML = '✅ Video Selected';
+            
+            hideAlert(); // Hide any previous alerts
+        } else {
+            hideFileInfo();
+        }
+    });
+
+    function hideFileInfo() {
+        dropText.style.display = 'block';
+        fileInfo.style.display = 'none';
+        fileUploadButton.style.background = '';
+        fileUploadButton.innerHTML = '📹 Upload Video';
+    }
+
+    // Function to change/clear video selection
+    function changeVideo() {
+        fileUpload.value = ''; // Clear the file input
+        hideFileInfo();
+        hideAlert(); // Hide any existing alerts
+        
+        // Add a subtle animation to indicate the change
+        fileUploadButton.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            fileUploadButton.style.transform = '';
+            // Immediately open file picker for new selection
+            fileUpload.click();
+        }, 200);
+    }
+
+    // Form submission validation
+    uploadForm.addEventListener('submit', function(e) {
+        // Check if a file is selected
+        if (!fileUpload.files || fileUpload.files.length === 0) {
+            e.preventDefault(); // Prevent form submission
+            showAlert('⚠️ Please select a video file before processing!', 'warning');
+            
+            // Highlight the upload button
+            fileUploadButton.style.transform = 'scale(1.05)';
+            fileUploadButton.style.boxShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+            setTimeout(() => {
+                fileUploadButton.style.transform = '';
+                fileUploadButton.style.boxShadow = '';
+            }, 1000);
+            
+            return false;
+        }
+        
+        // Additional validation for numeric inputs
+        const brightness = document.getElementById('brightness').value;
+        const contrast = document.getElementById('contrast').value;
+        
+        if (brightness && (isNaN(brightness) || brightness < 0 || brightness > 3)) {
+            e.preventDefault();
+            showAlert('❌ Brightness must be a number between 0 and 3', 'error');
+            return false;
+        }
+        
+        if (contrast && (isNaN(contrast) || contrast < 0 || contrast > 3)) {
+            e.preventDefault();
+            showAlert('❌ Contrast must be a number between 0 and 3', 'error');
+            return false;
+        }
+        
+        // Show processing message
+        showAlert('🎬 Processing your video... This may take a few moments.', 'info');
+        
+        // Disable submit button to prevent double submission
+        const submitButton = document.querySelector('.submit-button');
+        submitButton.disabled = true;
+        submitButton.textContent = '⏳ Processing...';
+        submitButton.style.opacity = '0.7';
+    });
+
+    // Alert system functions
+    function showAlert(message, type = 'warning') {
+        alertText.textContent = message;
+        alertArea.className = `alert-message alert-${type}`;
+        alertArea.style.display = 'block';
+        
+        // Auto-hide info messages after 5 seconds
+        if (type === 'info') {
+            setTimeout(() => {
+                hideAlert();
+            }, 5000);
+        }
+        
+        // Scroll to alert
+        alertArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideAlert() {
+        alertArea.style.display = 'none';
+    }
+
+    // Drag and drop functionality
+    const contentCard = document.querySelector('.content-card');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        contentCard.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        contentCard.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        contentCard.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        contentCard.style.backgroundColor = '#f0f8ff';
+        contentCard.style.borderColor = '#4facfe';
+    }
+
+    function unhighlight(e) {
+        contentCard.style.backgroundColor = '';
+        contentCard.style.borderColor = '';
+    }
+
+    contentCard.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileUpload.files = files;
+            // Trigger the change event
+            fileUpload.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+</script>
+{% endblock %} 

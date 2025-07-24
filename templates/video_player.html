@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Processed Video - Video Analysis Tool{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Processed Video</h2>
+
+{% if filename %}
+    <div class="video-area">
+        <video controls class="processed-video-player">
+            <source src="{{ url_for('processed_file', filename=filename) }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    <div class="actions-area">
+        <a href="{{ url_for('processed_file', filename=filename) }}" download class="action-button download-btn">
+            📥 Download Video
+        </a>
+        <a href="{{ url_for('index') }}" class="action-button process-btn">
+            🔄 Process Another Video
+        </a>
+    </div>
+{% else %}
+    <div class="error-section">
+        <p class="error-message">❌ Error: No video file specified.</p>
+        <div class="actions-area">
+            <a href="{{ url_for('index') }}" class="action-button process-btn">🔄 Try Again</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %} 
