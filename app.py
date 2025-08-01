@@ -682,4 +682,16 @@ def handle_join_job(data):
         })
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000) 
+    # For production, use Gunicorn instead of running this directly
+    # gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5000 app:app
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Only allow development server in specific cases
+    if os.environ.get('FLASK_ENV') == 'development':
+        socketio.run(app, debug=True, host='0.0.0.0', port=port)
+    else:
+        # Production: This should not be reached - use Gunicorn instead
+        print("⚠️  WARNING: Use Gunicorn for production deployment")
+        print("   Command: gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:{} app:app".format(port))
+        socketio.run(app, debug=False, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True) 
